@@ -6,7 +6,8 @@ should();
 import { Constructable } from "../message/Message";
 import { CommandClass, CommandClasses, getCommandClass } from "./CommandClass";
 import { NoOperationCC } from "./NoOperationCC";
-import { SendDataRequest, TransmitOptions } from "./SendDataMessages";
+// TODO: enable it again
+// import { SendDataRequest, TransmitOptions } from "./SendDataMessages";
 
 describe("lib/commandclass/NoOperationCC => ", () => {
 	const cc = new NoOperationCC(2);

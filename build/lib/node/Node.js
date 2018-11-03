@@ -22,6 +22,7 @@ const strings_2 = require("../util/strings");
 const DeviceClass_1 = require("./DeviceClass");
 const INodeQuery_1 = require("./INodeQuery");
 const RequestNodeInfoMessages_1 = require("./RequestNodeInfoMessages");
+const GetSerialApiCapabilitiesMessages_1 = require("../controller/GetSerialApiCapabilitiesMessages");
 /** Finds the ID of the target or source node in a message, if it contains that information */
 function getNodeId(msg) {
     if (INodeQuery_1.isNodeQuery(msg))
@@ -120,6 +121,7 @@ class ZWaveNode {
             if (this.interviewStage === InterviewStage.Ping /* TODO: change .Ping to .ManufacturerSpecific1 */) {
                 yield this.getNodeInfo();
             }
+            yield this.getNodeInfo();
             if (this.interviewStage === InterviewStage.NodeInfo /* TODO: change .NodeInfo to .Versions */) {
                 yield this.queryCCVersions();
             }
@@ -201,6 +203,11 @@ class ZWaveNode {
                 }
             }
             this.interviewStage = InterviewStage.NodeInfo;
+            const apiCaps = yield this.driver.sendMessage(new GetSerialApiCapabilitiesMessages_1.GetSerialApiCapabilitiesRequest(), "none");
+            logger_1.log("controller", `  serial API version:  ${apiCaps.serialApiVersion}`, "debug");
+            logger_1.log("controller", `  manufacturer ID:     ${strings_2.num2hex(apiCaps.manufacturerId)}`, "debug");
+            logger_1.log("controller", `  product type:        ${strings_2.num2hex(apiCaps.productType)}`, "debug");
+            logger_1.log("controller", `  product ID:          ${strings_2.num2hex(apiCaps.productId)}`, "debug");
         });
     }
     /** Step #9 of the node interview */
@@ -246,6 +253,18 @@ class ZWaveNode {
                     // The node reported its supported versions
                     const csCC = command;
                     logger_1.log("controller", `${this.logPrefix}received CentralScene command ${JSON.stringify(csCC)}`, "debug");
+                    break;
+                }
+                case CommandClass_1.CommandClasses["Battery"]: {
+                    const csCC = command;
+                    const value = csCC.currentValue;
+                    logger_1.log("controller", `${this.logPrefix}received Battery command ${JSON.stringify(csCC)} --- ${value}`, "debug");
+                    break;
+                }
+                case CommandClass_1.CommandClasses["Thermostat Setpoint"]: {
+                    const csCC = command;
+                    const value = csCC.currentValue;
+                    logger_1.log("controller", `${this.logPrefix}received ThermostatSetpoint command ${JSON.stringify(csCC)} --- ${value}`, "debug");
                     break;
                 }
                 default: {

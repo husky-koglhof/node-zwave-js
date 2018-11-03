@@ -1,5 +1,7 @@
 import { padStart } from "alcalzone-shared/strings";
 import { CentralSceneCC } from "../commandclass/CentralSceneCC";
+import { BatteryCC } from "../commandclass/BatteryCC";
+import { ThermostatSetpointCC } from "../commandclass/ThermostatSetpointCC";
 import { CommandClass, CommandClasses, CommandClassInfo, getImplementedVersion } from "../commandclass/CommandClass";
 import { isCommandClassContainer } from "../commandclass/ICommandClassContainer";
 import { NoOperationCC } from "../commandclass/NoOperationCC";
@@ -15,6 +17,7 @@ import { num2hex, stringify } from "../util/strings";
 import { BasicDeviceClasses, DeviceClass } from "./DeviceClass";
 import { isNodeQuery } from "./INodeQuery";
 import { RequestNodeInfoRequest, RequestNodeInfoResponse } from "./RequestNodeInfoMessages";
+import { GetSerialApiCapabilitiesRequest, GetSerialApiCapabilitiesResponse } from "../controller/GetSerialApiCapabilitiesMessages";
 
 /** Finds the ID of the target or source node in a message, if it contains that information */
 export function getNodeId(msg: Message): number {
@@ -147,6 +150,8 @@ export class ZWaveNode {
 			await this.getNodeInfo();
 		}
 
+		await this.getNodeInfo();
+
 		if (this.interviewStage === InterviewStage.NodeInfo /* TODO: change .NodeInfo to .Versions */) {
 			await this.queryCCVersions();
 		}
@@ -229,6 +234,12 @@ export class ZWaveNode {
 			}
 		}
 		this.interviewStage = InterviewStage.NodeInfo;
+
+		const apiCaps = await this.driver.sendMessage<GetSerialApiCapabilitiesResponse>(new GetSerialApiCapabilitiesRequest(), "none");
+		log("controller", `  serial API version:  ${apiCaps.serialApiVersion}`, "debug");
+		log("controller", `  manufacturer ID:     ${num2hex(apiCaps.manufacturerId)}`, "debug");
+		log("controller", `  product type:        ${num2hex(apiCaps.productType)}`, "debug");
+		log("controller", `  product ID:          ${num2hex(apiCaps.productId)}`, "debug");
 	}
 
 	/** Step #9 of the node interview */
@@ -273,6 +284,18 @@ export class ZWaveNode {
 				// The node reported its supported versions
 				const csCC = command as CentralSceneCC;
 				log("controller", `${this.logPrefix}received CentralScene command ${JSON.stringify(csCC)}`, "debug");
+				break;
+			}
+			case CommandClasses["Battery"]: {
+				const csCC = command as BatteryCC;
+				const value = csCC.currentValue;
+				log("controller", `${this.logPrefix}received Battery command ${JSON.stringify(csCC)} --- ${value}`, "debug");
+				break;
+			}
+			case CommandClasses["Thermostat Setpoint"]: {
+				const csCC = command as ThermostatSetpointCC;
+				const value = csCC.currentValue;
+				log("controller", `${this.logPrefix}received ThermostatSetpoint command ${JSON.stringify(csCC)} --- ${value}`, "debug");
 				break;
 			}
 			default: {

@@ -22,7 +22,9 @@ var MultilevelSwitchCommand;
     MultilevelSwitchCommand[MultilevelSwitchCommand["SupportedReport"] = 7] = "SupportedReport";
 })(MultilevelSwitchCommand = exports.MultilevelSwitchCommand || (exports.MultilevelSwitchCommand = {}));
 let MultilevelSwitchCC = class MultilevelSwitchCC extends CommandClass_1.CommandClass {
-    constructor(nodeId, ccCommand, ...args) {
+    constructor(nodeId, ccCommand, 
+    // tslint:disable-next-line:trailing-comma
+    ...args) {
         super(nodeId);
         this.nodeId = nodeId;
         this.ccCommand = ccCommand;

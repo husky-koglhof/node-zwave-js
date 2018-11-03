@@ -9,8 +9,10 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+var CommandClass_1;
 const objects_1 = require("alcalzone-shared/objects");
 const fs = require("fs");
+const ZWaveError_1 = require("../error/ZWaveError");
 const logger_1 = require("../util/logger");
 const strings_1 = require("../util/strings");
 let CommandClass = CommandClass_1 = class CommandClass {
@@ -41,6 +43,47 @@ let CommandClass = CommandClass_1 = class CommandClass {
         this.command = CommandClass_1.getCommandClass(data);
         this.payload = Buffer.allocUnsafe(dataLength);
         data.copy(this.payload, 0, 3, 3 + dataLength);
+    }
+    getPayloadByte(offset) {
+        return this.payload[offset] & 0xFF;
+    }
+    /**
+     * Extract a decimal value from a byte array.
+     *
+     * @param offset the offset at which to start reading
+     * @return the extracted decimal value
+     */
+    extractValue(offset) {
+        const SIZE_MASK = 0x07;
+        const PRECISION_MASK = 0xe0;
+        const PRECISION_SHIFT = 0x05;
+        const size = this.getPayloadByte(offset) & SIZE_MASK;
+        const precision = (this.getPayloadByte(offset) & PRECISION_MASK) >> PRECISION_SHIFT;
+        if ((size + offset) >= this.payload.length) {
+            throw new ZWaveError_1.ZWaveError("Error extracting value - length=" + this.payload.length
+                + ", offset=" + offset + ", size=" + size + ".", ZWaveError_1.ZWaveErrorCodes.CC_Invalid);
+        }
+        let value = 0;
+        let i;
+        for (i = 0; i < size; ++i) {
+            value <<= 8;
+            value |= this.getPayloadByte(offset + i + 1) & 0xFF;
+        }
+        // Deal with sign extension. All values are signed
+        let result;
+        if ((this.getPayloadByte(offset + 1) & 0x80) === 0x80) {
+            // MSB is signed
+            if (size === 1) {
+                value |= 0xffffff00;
+            }
+            else if (size === 2) {
+                value |= 0xffff0000;
+            }
+        }
+        result = value;
+        const divisor = Math.pow(10, precision);
+        // return result.divide(divisor);
+        return result / divisor;
     }
     static getNodeId(ccData) {
         return ccData[0];
@@ -370,4 +413,3 @@ for (const file of definedCCs) {
     // tslint:disable-next-line:no-var-requires
     require(`./${file}`);
 }
-var CommandClass_1;

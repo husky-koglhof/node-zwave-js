@@ -7,13 +7,13 @@ export declare enum WakeUpCommand {
     WakeUpNotification = 7,
     NoMoreInformation = 8,
     IntervalCapabilitiesGet = 9,
-    IntervalCapabilitiesReport = 10,
+    IntervalCapabilitiesReport = 10
 }
 export declare class WakeUpCC extends CommandClass {
     nodeId: number;
-    wakeupCommand: WakeUpCommand;
-    wakeupInterval: number;
-    controllerNodeId: number;
+    wakeupCommand?: WakeUpCommand;
+    wakeupInterval?: number;
+    controllerNodeId?: number;
     constructor(nodeId?: number);
     constructor(nodeId: number, command: WakeUpCommand.IntervalSet, interval: number, controllerNodeId: number);
     constructor(nodeId: number, command: WakeUpCommand.IntervalGet | WakeUpCommand.NoMoreInformation | WakeUpCommand.IntervalCapabilitiesGet);

@@ -43,7 +43,8 @@ export class MultilevelSwitchCC extends CommandClass {
 	constructor(
 		public nodeId: number,
 		public ccCommand?: MultilevelSwitchCommand,
-		...args: any[],
+		// tslint:disable-next-line:trailing-comma
+		...args: any[]
 	) {
 		super(nodeId);
 		if (ccCommand === MultilevelSwitchCommand.Set) {

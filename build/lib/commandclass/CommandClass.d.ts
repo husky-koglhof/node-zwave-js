@@ -9,8 +9,8 @@ export interface CommandClassStatic {
     readonly maxImplementedVersion: number;
 }
 export declare class CommandClass {
-    nodeId: number;
-    command: CommandClasses;
+    nodeId?: number;
+    command?: CommandClasses;
     payload: Buffer;
     constructor();
     constructor(nodeId: number, command?: CommandClasses, payload?: Buffer);
@@ -18,6 +18,14 @@ export declare class CommandClass {
     version: number;
     serialize(): Buffer;
     deserialize(data: Buffer): void;
+    private getPayloadByte;
+    /**
+     * Extract a decimal value from a byte array.
+     *
+     * @param offset the offset at which to start reading
+     * @return the extracted decimal value
+     */
+    extractValue(offset: number): number;
     static getNodeId(ccData: Buffer): number;
     static getCommandClass(ccData: Buffer): CommandClasses;
     /**
@@ -27,7 +35,7 @@ export declare class CommandClass {
     static getConstructor(ccData: Buffer): Constructable<CommandClass>;
     static from(serializedCC: Buffer): CommandClass;
     toJSON(): any;
-    private toJSONInternal();
+    private toJSONInternal;
     protected toJSONInherited(props: Record<string, any>): Record<string, any>;
 }
 export declare const METADATA_commandClass: unique symbol;
@@ -196,5 +204,5 @@ export declare enum CommandClasses {
     "Z/IP Naming and Location" = 104,
     "Z/IP ND" = 88,
     "Z/IP Portal" = 97,
-    "Z-Wave Plus Info" = 94,
+    "Z-Wave Plus Info" = 94
 }

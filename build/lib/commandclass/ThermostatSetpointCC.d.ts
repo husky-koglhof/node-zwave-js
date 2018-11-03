@@ -5,7 +5,7 @@ export declare enum BasicCommand {
     Get = 2,
     Report = 3
 }
-export declare class BasicCC extends CommandClass {
+export declare class ThermostatSetpointCC extends CommandClass {
     nodeId: number;
     ccCommand?: BasicCommand;
     constructor(nodeId?: number);

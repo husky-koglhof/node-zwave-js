@@ -40,13 +40,13 @@ export declare class ZWaveNode {
     getCCVersion(cc: CommandClasses): number;
     interview(): Promise<void>;
     /** Step #1 of the node interview */
-    private queryProtocolInfo();
+    private queryProtocolInfo;
     /** Step #2 of the node interview */
-    private ping();
+    private ping;
     /** Step #5 of the node interview */
-    private getNodeInfo();
+    private getNodeInfo;
     /** Step #9 of the node interview */
-    private queryCCVersions();
+    private queryCCVersions;
     /** Handles an ApplicationCommandRequest sent from a node */
     handleCommand(command: CommandClass): Promise<void>;
 }
@@ -69,5 +69,5 @@ export declare enum InterviewStage {
     Session = 15,
     Dynamic = 16,
     Configuration = 17,
-    Complete = 18,
+    Complete = 18
 }

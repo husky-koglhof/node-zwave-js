@@ -1,6 +1,7 @@
 {
     "compileOnSave": true,
     "compilerOptions": {
+        "strictNullChecks": false,
         "declaration": true,
         "module": "commonjs",
         "moduleResolution": "node",
@@ -14,7 +15,7 @@
         "inlineSourceMap": false,
         "stripInternal": true,
         "target": "es2015",
-        "strictPropertyInitialization": true,
+        "strictPropertyInitialization": false,
         "watch": false, // true breaks circleci
         "pretty": true
     },

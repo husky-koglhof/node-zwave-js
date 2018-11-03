@@ -1,5 +1,6 @@
 import { entries } from "alcalzone-shared/objects";
 import * as fs from "fs";
+import { ZWaveError, ZWaveErrorCodes } from "../error/ZWaveError";
 import { Constructable } from "../message/Message";
 import { log } from "../util/logger";
 import { num2hex, stringify } from "../util/strings";
@@ -62,6 +63,54 @@ export class CommandClass {
 		this.command = CommandClass.getCommandClass(data);
 		this.payload = Buffer.allocUnsafe(dataLength);
 		data.copy(this.payload, 0, 3, 3 + dataLength);
+	}
+
+	private getPayloadByte(offset: number): number {
+		return this.payload[offset] & 0xFF;
+	}
+
+	/**
+	 * Extract a decimal value from a byte array.
+	 *
+	 * @param offset the offset at which to start reading
+	 * @return the extracted decimal value
+	 */
+	public extractValue(offset: number): number {
+		const SIZE_MASK = 0x07;
+		const PRECISION_MASK = 0xe0;
+		const PRECISION_SHIFT = 0x05;
+		const size = this.getPayloadByte(offset) & SIZE_MASK;
+		const precision = (this.getPayloadByte(offset) & PRECISION_MASK) >> PRECISION_SHIFT;
+
+		if ((size + offset) >= this.payload.length) {
+			throw new ZWaveError(
+				"Error extracting value - length=" + this.payload.length
+				+ ", offset=" + offset + ", size=" + size + ".",
+				ZWaveErrorCodes.CC_Invalid,
+			);
+		}
+
+		let value = 0;
+		let i: number;
+		for (i = 0; i < size; ++i) {
+			value <<= 8;
+			value |= this.getPayloadByte(offset + i + 1) & 0xFF;
+		}
+
+		// Deal with sign extension. All values are signed
+		let result;
+		if ((this.getPayloadByte(offset + 1) & 0x80) === 0x80) {
+			// MSB is signed
+			if (size === 1) {
+				value |= 0xffffff00;
+			} else if (size === 2) {
+				value |= 0xffff0000;
+			}
+		}
+		result = value;
+		const divisor = Math.pow(10, precision);
+		// return result.divide(divisor);
+		return result / divisor;
 	}
 
 	public static getNodeId(ccData: Buffer): number {
