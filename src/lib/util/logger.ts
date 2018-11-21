@@ -3,7 +3,7 @@ const colors = require("colors/safe");
 import * as debug from "debug";
 
 const defaultNamespace = "zwave";
-export type SubNamespaces = "driver" | "io" | "controller" | "protocol";
+export type SubNamespaces = "driver" | "io" | "controller" | "protocol" | "self";
 export type Severity = "info" | "warn" | "debug" | "error" | "silly";
 
 export type LoggerFunction = (message: string, severity?: Severity) => void;
@@ -39,6 +39,12 @@ export function log(...args: any[]) {
 		([namespace, message, severity] = args);
 		// add the namespace separator to append the namespace to the default one
 		if (typeof namespace === "string" && namespace !== "") namespace = ":" + namespace;
+	}
+
+	if (namespace !== ":self") {
+		const date = new Date();
+		// tslint:disable-next-line:no-console
+		console.log(date + " - " + namespace + ": " + severity + ": " + message);
 	}
 
 	function defaultLogger() {

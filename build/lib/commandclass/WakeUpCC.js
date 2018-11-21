@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const ZWaveError_1 = require("../error/ZWaveError");
+const logger_1 = require("../util/logger");
 const CommandClass_1 = require("./CommandClass");
 var WakeUpCommand;
 (function (WakeUpCommand) {
@@ -64,6 +65,7 @@ let WakeUpCC = class WakeUpCC extends CommandClass_1.CommandClass {
     deserialize(data) {
         super.deserialize(data);
         this.wakeupCommand = this.payload[0];
+        logger_1.log("self", `---> ${this.wakeupCommand}`, "debug");
         switch (this.wakeupCommand) {
             case WakeUpCommand.IntervalReport:
                 this.wakeupInterval = this.payload.readUIntBE(1, 3);

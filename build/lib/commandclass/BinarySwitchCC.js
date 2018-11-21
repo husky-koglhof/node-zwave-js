@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const ZWaveError_1 = require("../error/ZWaveError");
+const logger_1 = require("../util/logger");
 const CommandClass_1 = require("./CommandClass");
 var BinarySwitchCommand;
 (function (BinarySwitchCommand) {
@@ -59,6 +60,7 @@ let BinarySwitchCC = class BinarySwitchCC extends CommandClass_1.CommandClass {
                     this.targetValue = decodeBinarySwitchState(this.payload[2]);
                     this.duration = this.payload[3];
                 }
+                logger_1.log("self", `BinarySwitch Report: ${this.nodeId} = ${this._currentValue} = ${this.targetValue} = ${this.duration}`, "info");
                 break;
             }
             default:

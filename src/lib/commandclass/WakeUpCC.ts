@@ -1,4 +1,5 @@
 import { ZWaveError, ZWaveErrorCodes } from "../error/ZWaveError";
+import { log } from "../util/logger";
 import { CommandClass, commandClass, CommandClasses, expectedCCResponse, implementedVersion } from "./CommandClass";
 
 export enum WakeUpCommand {
@@ -91,6 +92,7 @@ export class WakeUpCC extends CommandClass {
 		super.deserialize(data);
 
 		this.wakeupCommand = this.payload[0];
+		log("self", `---> ${this.wakeupCommand}`, "debug");
 		switch (this.wakeupCommand) {
 			case WakeUpCommand.IntervalReport:
 				this.wakeupInterval = this.payload.readUIntBE(1, 3);

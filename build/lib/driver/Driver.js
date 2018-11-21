@@ -346,6 +346,7 @@ class Driver extends events_1.EventEmitter {
         if (msg.type === Constants_1.MessageType.Request) {
             // This is a request we might have registered handlers for
             this.handleRequest(msg);
+            logger_1.log("controller", `HELP ME`, "debug");
         }
         else {
             logger_1.log("driver", `  unexpected response, discarding...`, "debug");
@@ -442,6 +443,7 @@ class Driver extends events_1.EventEmitter {
             // dispatch the command to the node itself
             const node = this.controller.nodes.get(nodeId);
             node.handleCommand(msg.command);
+            this.emit("value changed", node, msg);
             return;
         }
         else if (msg instanceof SendDataMessages_1.SendDataRequest && msg.command != null) {
@@ -640,6 +642,7 @@ class Driver extends events_1.EventEmitter {
         this.doSend(data);
     }
     doSend(data) {
+        logger_1.log("io", `########################### data = 0x${data.toString("hex")}`, "debug");
         this.serial.write(data);
     }
 }

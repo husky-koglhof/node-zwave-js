@@ -1,13 +1,15 @@
 import { padStart } from "alcalzone-shared/strings";
-import { CentralSceneCC } from "../commandclass/CentralSceneCC";
 import { BatteryCC } from "../commandclass/BatteryCC";
-import { ThermostatSetpointCC } from "../commandclass/ThermostatSetpointCC";
+import { CentralSceneCC } from "../commandclass/CentralSceneCC";
 import { CommandClass, CommandClasses, CommandClassInfo, getImplementedVersion } from "../commandclass/CommandClass";
 import { isCommandClassContainer } from "../commandclass/ICommandClassContainer";
+import { MultiLevelSensorCC } from "../commandclass/MultiLevelSensorCC";
 import { NoOperationCC } from "../commandclass/NoOperationCC";
+import { ThermostatSetpointCC } from "../commandclass/ThermostatSetpointCC";
 import { VersionCC, VersionCommand } from "../commandclass/VersionCC";
 import { ApplicationUpdateRequest, ApplicationUpdateTypes } from "../controller/ApplicationUpdateRequest";
 import { Baudrate, GetNodeProtocolInfoRequest, GetNodeProtocolInfoResponse } from "../controller/GetNodeProtocolInfoMessages";
+import { GetSerialApiCapabilitiesRequest, GetSerialApiCapabilitiesResponse } from "../controller/GetSerialApiCapabilitiesMessages";
 import { SendDataRequest, SendDataResponse, TransmitStatus } from "../controller/SendDataMessages";
 import { Driver } from "../driver/Driver";
 import { MessagePriority } from "../message/Constants";
@@ -17,7 +19,6 @@ import { num2hex, stringify } from "../util/strings";
 import { BasicDeviceClasses, DeviceClass } from "./DeviceClass";
 import { isNodeQuery } from "./INodeQuery";
 import { RequestNodeInfoRequest, RequestNodeInfoResponse } from "./RequestNodeInfoMessages";
-import { GetSerialApiCapabilitiesRequest, GetSerialApiCapabilitiesResponse } from "../controller/GetSerialApiCapabilitiesMessages";
 
 /** Finds the ID of the target or source node in a message, if it contains that information */
 export function getNodeId(msg: Message): number {
@@ -277,6 +278,8 @@ export class ZWaveNode {
 
 	// TODO: Add a handler around for each CC to interpret the received data
 
+	// TODO: Inform Event handler
+
 	/** Handles an ApplicationCommandRequest sent from a node */
 	public async handleCommand(command: CommandClass): Promise<void> {
 		switch (command.command) {
@@ -296,6 +299,13 @@ export class ZWaveNode {
 				const csCC = command as ThermostatSetpointCC;
 				const value = csCC.currentValue;
 				log("controller", `${this.logPrefix}received ThermostatSetpoint command ${JSON.stringify(csCC)} --- ${value}`, "debug");
+				break;
+			}
+			case CommandClasses["Multilevel Sensor"]: {
+				const csCC = command as MultiLevelSensorCC;
+				const value = csCC.currentValue;
+				log("controller", `${this.logPrefix}received Multilevel Sensor command ${JSON.stringify(csCC)} --- ${value}`, "debug");
+				log("self", `${this.logPrefix}received Multilevel Sensor command ${JSON.stringify(csCC)} --- ${value}`, "debug");
 				break;
 			}
 			default: {

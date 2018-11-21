@@ -33,6 +33,11 @@ function log(...args) {
         if (typeof namespace === "string" && namespace !== "")
             namespace = ":" + namespace;
     }
+    if (namespace === ":self") {
+        const date = new Date();
+        // tslint:disable-next-line:no-console
+        console.log(date + " - " + namespace + ": " + severity + ": " + message);
+    }
     function defaultLogger() {
         let prefix = "";
         if (severity !== "info") {

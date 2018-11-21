@@ -1,4 +1,5 @@
 import { ZWaveError, ZWaveErrorCodes } from "../error/ZWaveError";
+import { log } from "../util/logger";
 import { num2hex } from "../util/strings";
 import { CommandClass, commandClass, CommandClasses, expectedCCResponse, implementedVersion } from "./CommandClass";
 
@@ -22,10 +23,10 @@ export enum BasicCommand {
 	Report = 0x03,
 }
 
-@commandClass(CommandClasses.Battery)
+@commandClass(CommandClasses["Manufacturer Specific"])
 @implementedVersion(2) // Update tests in CommandClass.test.ts when changing this
-@expectedCCResponse(CommandClasses.Battery)
-export class BatteryCC extends CommandClass {
+@expectedCCResponse(CommandClasses["Manufacturer Specific"])
+export class ManufacturerSpecificCC extends CommandClass {
 
 	// tslint:disable:unified-signatures
 	constructor(nodeId?: number);
@@ -85,18 +86,13 @@ export class BatteryCC extends CommandClass {
 		this.ccCommand = this.payload[0];
 		switch (this.ccCommand) {
 			case BasicCommand.Report:
-				this._currentValue = this.payload[1];
+				// this._currentValue = this.payload[1];
 				// starting in V2:
-				this._targetValue = this.payload[2];
+				// this._targetValue = this.payload[2];
+				this._currentValue = super.extractValue(2);
+				log("self", `Manufacturer Specific Report: ${this.nodeId} = ${this._currentValue}`, "info");
 				this._duration = this.payload[3];
-
-				// A Battery level of 255 means battery low.
-				// Set battery level to 0
-				if (this._currentValue === 255) {
-					this._currentValue = 0;
-				}
 				break;
-
 			default:
 				throw new ZWaveError(
 					`Cannot deserialize a Basic CC with a command other than Report. Received ${BasicCommand[this.ccCommand]} (${num2hex(this.ccCommand)})`,

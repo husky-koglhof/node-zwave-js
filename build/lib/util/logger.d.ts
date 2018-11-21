@@ -1,4 +1,4 @@
-export declare type SubNamespaces = "driver" | "io" | "controller" | "protocol";
+export declare type SubNamespaces = "driver" | "io" | "controller" | "protocol" | "self";
 export declare type Severity = "info" | "warn" | "debug" | "error" | "silly";
 export declare type LoggerFunction = (message: string, severity?: Severity) => void;
 export declare function setCustomLogger(logger: LoggerFunction): void;

@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const ZWaveError_1 = require("../error/ZWaveError");
+const logger_1 = require("../util/logger");
 const strings_1 = require("../util/strings");
 const CommandClass_1 = require("./CommandClass");
 // TODO: encode duration:
@@ -31,7 +32,7 @@ var BasicCommand;
     BasicCommand[BasicCommand["Get"] = 2] = "Get";
     BasicCommand[BasicCommand["Report"] = 3] = "Report";
 })(BasicCommand = exports.BasicCommand || (exports.BasicCommand = {}));
-let BatteryCC = class BatteryCC extends CommandClass_1.CommandClass {
+let ManufacturerSpecificCC = class ManufacturerSpecificCC extends CommandClass_1.CommandClass {
     constructor(nodeId, ccCommand, targetValue) {
         super(nodeId);
         this.nodeId = nodeId;
@@ -69,26 +70,23 @@ let BatteryCC = class BatteryCC extends CommandClass_1.CommandClass {
         this.ccCommand = this.payload[0];
         switch (this.ccCommand) {
             case BasicCommand.Report:
-                this._currentValue = this.payload[1];
+                // this._currentValue = this.payload[1];
                 // starting in V2:
-                this._targetValue = this.payload[2];
+                // this._targetValue = this.payload[2];
+                this._currentValue = super.extractValue(2);
+                logger_1.log("self", `Manufacturer Specific Report: ${this.nodeId} = ${this._currentValue}`, "info");
                 this._duration = this.payload[3];
-                // A Battery level of 255 means battery low.
-                // Set battery level to 0
-                if (this._currentValue === 255) {
-                    this._currentValue = 0;
-                }
                 break;
             default:
                 throw new ZWaveError_1.ZWaveError(`Cannot deserialize a Basic CC with a command other than Report. Received ${BasicCommand[this.ccCommand]} (${strings_1.num2hex(this.ccCommand)})`, ZWaveError_1.ZWaveErrorCodes.CC_Invalid);
         }
     }
 };
-BatteryCC = __decorate([
-    CommandClass_1.commandClass(CommandClass_1.CommandClasses.Battery),
+ManufacturerSpecificCC = __decorate([
+    CommandClass_1.commandClass(CommandClass_1.CommandClasses["Manufacturer Specific"]),
     CommandClass_1.implementedVersion(2) // Update tests in CommandClass.test.ts when changing this
     ,
-    CommandClass_1.expectedCCResponse(CommandClass_1.CommandClasses.Battery),
+    CommandClass_1.expectedCCResponse(CommandClass_1.CommandClasses["Manufacturer Specific"]),
     __metadata("design:paramtypes", [Number, Number, Number])
-], BatteryCC);
-exports.BatteryCC = BatteryCC;
+], ManufacturerSpecificCC);
+exports.ManufacturerSpecificCC = ManufacturerSpecificCC;

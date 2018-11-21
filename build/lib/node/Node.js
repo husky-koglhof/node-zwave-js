@@ -15,6 +15,7 @@ const NoOperationCC_1 = require("../commandclass/NoOperationCC");
 const VersionCC_1 = require("../commandclass/VersionCC");
 const ApplicationUpdateRequest_1 = require("../controller/ApplicationUpdateRequest");
 const GetNodeProtocolInfoMessages_1 = require("../controller/GetNodeProtocolInfoMessages");
+const GetSerialApiCapabilitiesMessages_1 = require("../controller/GetSerialApiCapabilitiesMessages");
 const SendDataMessages_1 = require("../controller/SendDataMessages");
 const Constants_1 = require("../message/Constants");
 const logger_1 = require("../util/logger");
@@ -22,7 +23,6 @@ const strings_2 = require("../util/strings");
 const DeviceClass_1 = require("./DeviceClass");
 const INodeQuery_1 = require("./INodeQuery");
 const RequestNodeInfoMessages_1 = require("./RequestNodeInfoMessages");
-const GetSerialApiCapabilitiesMessages_1 = require("../controller/GetSerialApiCapabilitiesMessages");
 /** Finds the ID of the target or source node in a message, if it contains that information */
 function getNodeId(msg) {
     if (INodeQuery_1.isNodeQuery(msg))
@@ -245,6 +245,7 @@ class ZWaveNode {
     }
     //#endregion
     // TODO: Add a handler around for each CC to interpret the received data
+    // TODO: Inform Event handler
     /** Handles an ApplicationCommandRequest sent from a node */
     handleCommand(command) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -265,6 +266,13 @@ class ZWaveNode {
                     const csCC = command;
                     const value = csCC.currentValue;
                     logger_1.log("controller", `${this.logPrefix}received ThermostatSetpoint command ${JSON.stringify(csCC)} --- ${value}`, "debug");
+                    break;
+                }
+                case CommandClass_1.CommandClasses["Multilevel Sensor"]: {
+                    const csCC = command;
+                    const value = csCC.currentValue;
+                    logger_1.log("controller", `${this.logPrefix}received Multilevel Sensor command ${JSON.stringify(csCC)} --- ${value}`, "debug");
+                    logger_1.log("self", `${this.logPrefix}received Multilevel Sensor command ${JSON.stringify(csCC)} --- ${value}`, "debug");
                     break;
                 }
                 default: {

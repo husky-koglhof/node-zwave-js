@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const ZWaveError_1 = require("../error/ZWaveError");
+const logger_1 = require("../util/logger");
 const strings_1 = require("../util/strings");
 const CommandClass_1 = require("./CommandClass");
 // TODO: encode duration:
@@ -30,8 +31,9 @@ var BasicCommand;
     BasicCommand[BasicCommand["Set"] = 1] = "Set";
     BasicCommand[BasicCommand["Get"] = 2] = "Get";
     BasicCommand[BasicCommand["Report"] = 3] = "Report";
+    BasicCommand[BasicCommand["ExtendedReport"] = 8] = "ExtendedReport";
 })(BasicCommand = exports.BasicCommand || (exports.BasicCommand = {}));
-let BatteryCC = class BatteryCC extends CommandClass_1.CommandClass {
+let ClimateControlScheduleCC = class ClimateControlScheduleCC extends CommandClass_1.CommandClass {
     constructor(nodeId, ccCommand, targetValue) {
         super(nodeId);
         this.nodeId = nodeId;
@@ -69,26 +71,45 @@ let BatteryCC = class BatteryCC extends CommandClass_1.CommandClass {
         this.ccCommand = this.payload[0];
         switch (this.ccCommand) {
             case BasicCommand.Report:
-                this._currentValue = this.payload[1];
-                // starting in V2:
-                this._targetValue = this.payload[2];
-                this._duration = this.payload[3];
-                // A Battery level of 255 means battery low.
-                // Set battery level to 0
-                if (this._currentValue === 255) {
-                    this._currentValue = 0;
+            case BasicCommand.ExtendedReport:
+                let day = this.payload[1] & 0x07;
+                if (day > 7) {
+                    logger_1.log("self", `Day Value was greater than range. Setting to Invalid`, "debug");
+                    day = 0;
                 }
+                for (let i = 2; i < 29; i += 3) {
+                    const setback = this.payload[i + 2];
+                    if (setback === 0x7f) {
+                        // Switch point is unused, so we stop parsing here
+                        break;
+                    }
+                    const hours = this.payload[i] & 0x1f;
+                    const minutes = this.payload[i + 1] & 0x3f;
+                    if (setback === 0x79) {
+                        logger_1.log("self", `ClimateControlSchedule Frost Protection Mode: ${this.nodeId} = ${day} - ${hours}:${minutes}`, "debug");
+                    }
+                    else if (setback === 0x7a) {
+                        logger_1.log("self", `ClimateControlSchedule Energy Saving Mode: ${this.nodeId} = ${day} - ${hours}:${minutes}`, "debug");
+                    }
+                    else {
+                        logger_1.log("self", `ClimateControlSchedule Setback: ${this.nodeId} = ${day} - ${hours}:${minutes} - ${setback}`, "debug");
+                    }
+                    this._currentValue = 4711;
+                    // value->SetSwitchPoint( hours, minutes, setback );
+                }
+                logger_1.log("self", `ClimateControlSchedule Report: ${this.nodeId} = ${this._currentValue}`, "info");
+                logger_1.log("controller", `ClimateControlSchedule Report: ${this.nodeId} = ${this._currentValue}`, "info");
                 break;
             default:
                 throw new ZWaveError_1.ZWaveError(`Cannot deserialize a Basic CC with a command other than Report. Received ${BasicCommand[this.ccCommand]} (${strings_1.num2hex(this.ccCommand)})`, ZWaveError_1.ZWaveErrorCodes.CC_Invalid);
         }
     }
 };
-BatteryCC = __decorate([
-    CommandClass_1.commandClass(CommandClass_1.CommandClasses.Battery),
+ClimateControlScheduleCC = __decorate([
+    CommandClass_1.commandClass(CommandClass_1.CommandClasses["Climate Control Schedule"]),
     CommandClass_1.implementedVersion(2) // Update tests in CommandClass.test.ts when changing this
     ,
-    CommandClass_1.expectedCCResponse(CommandClass_1.CommandClasses.Battery),
+    CommandClass_1.expectedCCResponse(CommandClass_1.CommandClasses["Climate Control Schedule"]),
     __metadata("design:paramtypes", [Number, Number, Number])
-], BatteryCC);
-exports.BatteryCC = BatteryCC;
+], ClimateControlScheduleCC);
+exports.ClimateControlScheduleCC = ClimateControlScheduleCC;

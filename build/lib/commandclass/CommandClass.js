@@ -21,6 +21,9 @@ let CommandClass = CommandClass_1 = class CommandClass {
         this.nodeId = nodeId;
         this.command = command;
         this.payload = payload;
+        this.SIZE_MASK = 0x07;
+        this.PRECISION_MASK = 0xe0;
+        this.PRECISION_SHIFT = 0x05;
         // Extract the cc from declared metadata if not provided
         this.command = command != null ? command : getCommandClass(this);
     }
@@ -47,6 +50,60 @@ let CommandClass = CommandClass_1 = class CommandClass {
     getPayloadByte(offset) {
         return this.payload[offset] & 0xFF;
     }
+    getScaleAndPrecision(x) {
+        x = parseFloat(x) + "";
+        const scale = x.indexOf(".");
+        if (scale === -1)
+            return null;
+        return {
+            scale: scale,
+            precision: x.length - scale - 1,
+        };
+    }
+    setScale(x, scale) {
+        x = parseFloat(x) + "";
+        const array = x.split(".");
+        return (parseFloat(array[0] + "." + array[1].substring(0, scale))).toString();
+    }
+    encodeValue(value) {
+        // Remove any trailing zero's so we send the least amount of bytes possible
+        let normalizedValue = Number(value).toFixed(2);
+        // Make our scale at least 0, precision cannot be more than 7 but
+        // this is guarded by the Integer min / max values already.
+        const res = this.getScaleAndPrecision(normalizedValue);
+        if (res.scale < 0) {
+            normalizedValue = this.setScale(normalizedValue.toString(), 0);
+        }
+        // tslint:disable-next-line:radix
+        if (parseInt(normalizedValue) > Number.MAX_VALUE) {
+            throw new ZWaveError_1.ZWaveError("ArithmeticException", ZWaveError_1.ZWaveErrorCodes.ArithmeticException);
+            // tslint:disable-next-line:radix
+        }
+        else if (parseInt(normalizedValue) < Number.MIN_VALUE) {
+            throw new ZWaveError_1.ZWaveError("ArithmeticException", ZWaveError_1.ZWaveErrorCodes.ArithmeticException);
+        }
+        // default size = 4
+        let size = 4;
+        // it might fit in a byte or short
+        // tslint:disable-next-line:radix
+        if (parseInt(normalizedValue) >= Number.MIN_SAFE_INTEGER && parseInt(normalizedValue) <= Number.MAX_SAFE_INTEGER) {
+            size = 1;
+            // tslint:disable-next-line:radix
+        }
+        else if (parseInt(normalizedValue) >= Number.MIN_VALUE && parseInt(normalizedValue) <= Number.MAX_VALUE) {
+            size = 2;
+        }
+        const precision = res.scale;
+        /* byte[] result = new byte[size + 1]; */
+        const result = [];
+        result[0] = ((precision << this.PRECISION_SHIFT) | size);
+        // tslint:disable-next-line:radix
+        const unscaledValue = parseInt(normalizedValue); // ie. 22.5 = 225
+        for (let i = 0; i < size; i++) {
+            result[size - i] = ((unscaledValue >> (i * 8)) & 0xFF);
+        }
+        return result;
+    }
     /**
      * Extract a decimal value from a byte array.
      *
@@ -54,11 +111,8 @@ let CommandClass = CommandClass_1 = class CommandClass {
      * @return the extracted decimal value
      */
     extractValue(offset) {
-        const SIZE_MASK = 0x07;
-        const PRECISION_MASK = 0xe0;
-        const PRECISION_SHIFT = 0x05;
-        const size = this.getPayloadByte(offset) & SIZE_MASK;
-        const precision = (this.getPayloadByte(offset) & PRECISION_MASK) >> PRECISION_SHIFT;
+        const size = this.getPayloadByte(offset) & this.SIZE_MASK;
+        const precision = (this.getPayloadByte(offset) & this.PRECISION_MASK) >> this.PRECISION_SHIFT;
         if ((size + offset) >= this.payload.length) {
             throw new ZWaveError_1.ZWaveError("Error extracting value - length=" + this.payload.length
                 + ", offset=" + offset + ", size=" + size + ".", ZWaveError_1.ZWaveErrorCodes.CC_Invalid);

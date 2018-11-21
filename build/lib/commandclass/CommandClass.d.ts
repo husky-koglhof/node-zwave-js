@@ -19,6 +19,12 @@ export declare class CommandClass {
     serialize(): Buffer;
     deserialize(data: Buffer): void;
     private getPayloadByte;
+    private SIZE_MASK;
+    private PRECISION_MASK;
+    private PRECISION_SHIFT;
+    private getScaleAndPrecision;
+    private setScale;
+    encodeValue(value: number): number[];
     /**
      * Extract a decimal value from a byte array.
      *

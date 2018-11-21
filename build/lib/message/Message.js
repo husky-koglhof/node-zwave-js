@@ -27,6 +27,82 @@ class Message {
         // This is taken from the constructor args
         this.payload = payload;
     }
+    /*+ cbaumga **/
+    /** FROM OpenZwave **/
+    appendValue(_value, _scale) {
+        let PRECISION_SHIFT = 0x05;
+        let SCALE_SHIFT      = 0x03;
+
+        let precision;
+        let size;
+        let val;
+        let array = this.valueToInteger( _value);
+        precision = array.o_precision;
+        size = array.o_size;
+        val = array.val;
+
+        let message = [(precision<<PRECISION_SHIFT) | (_scale<<SCALE_SHIFT) | size];
+
+        let shift = (size-1)<<3;
+        for( let i=size; i>0; --i, shift-=8 ) {
+            message.push(val >> shift);
+        }
+        return message;
+    }
+    valueToInteger(_value) {
+        let val;
+        let precision;
+        let o_precision;
+
+        // Find the decimal point
+        let pos = _value.toString().indexOf( "." );
+        if( pos === -1 ) {
+            pos = _value.toString().indexOf( "," );
+        }
+
+        if( pos === -1 ) {
+            // No decimal point
+            precision = 0;
+
+            // Convert the string to an integer
+            val = Number(_value).toFixed(0);
+        } else {
+            // Remove the decimal point and convert to an integer
+            precision = pos-1;
+
+            let str = _value.replace(".").replace(",");
+            val = str;
+        }
+        const m_overridePrecision = 2; // Danfoss Thermostat
+
+        if ( m_overridePrecision > 0 ) {
+            while ( precision < m_overridePrecision ) {
+                precision++;
+                val *= 10;
+            }
+        }
+
+        o_precision = precision;
+        // Work out the size as either 1, 2 or 4 bytes
+        let o_size = 4;
+        if( val < 0 ) {
+            if( ( val & 0xffffff80 ) === 0xffffff80 ) {
+                o_size = 1;
+            } else if( ( val & 0xffff8000 ) === 0xffff8000 ) {
+                o_size = 2;
+            }
+        } else {
+            if( ( val & 0xffffff00 ) === 0 ) {
+                o_size = 1;
+            } else if( ( val & 0xffff0000 ) === 0 ) {
+                o_size = 2;
+            }
+        }
+        return {val, o_precision, o_size};
+    }
+    /** **/
+    /** cbaumga **/
+
     /** Serializes this message into a Buffer */
     serialize() {
         const payloadLength = this.payload != null ? this.payload.length : 0;
@@ -41,6 +117,8 @@ class Message {
             this.payload.copy(ret, 4);
         // followed by the checksum
         ret[ret.length - 1] = computeChecksum(ret);
+
+        logger_1.log("self", `----> : 0x${ret.toString("hex")}`, "debug")
         return ret;
     }
     /**
